@@ -1,0 +1,62 @@
+{
+    "background": "1.png",
+    "periods": [
+        {
+            "start": "21:00",
+            "end": "07:17"
+        },
+        {
+            "start": "07:50",
+            "end": "07:57"
+        },
+        {
+            "start": "08:45",
+            "end": "08:52"
+        },
+        {
+            "start": "09:40",
+            "end": "10:17"
+        },
+        {
+            "start": "11:05",
+            "end": "11:12"
+        },
+        {
+            "start": "12:00",
+            "end": "13:00"
+        },
+        {
+            "start": "14:55",
+            "end": "15:02"
+        },
+        {
+            "start": "15:50",
+            "end": "15:57"
+        },
+        {
+            "start": "16:45",
+            "end": "18:07"
+        },
+        {
+            "start": "19:10",
+            "end": "19:17"
+        },
+        {
+            "start": "20:10",
+            "end": "20:17"
+        }
+    ],
+    "exam_date": "2026-06-20",
+    "password": "2846579",
+    "usb_key_file": "key.txt",
+    "seewo_path": "C:\\Program Files (x86)\\Seewo\\EasiNote5\\swenlauncher\\swenlauncher.exe",
+    "enable_shutdown": true,
+    "whiteboard_max": 3,
+    "strong_lock_duration": 1,
+    "strong_periods": [
+        {
+            
+        }
+    ],
+    "auto_start": 0
+}
