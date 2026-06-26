@@ -1,5 +1,6 @@
 # **Lock Screen for Class**
 为班级管理而生的锁屏
+v0.6宣传片→https://www.bilibili.com/video/BV1jy7G6kEo3/?share_source=copy_web&vd_source=c9d828a5f589cafde88a1012eb18b02c
 
 ##图示
 ![picture1](1.png)
@@ -17,14 +18,10 @@
 
 ## 🚀 使用
 1.  UIAccess提权：双击start.bat并授权uac
-2. 普通（不提权）：直接打开lockscreenforclass
 
 ## ❕重要提示
 - 需要第三方py库：pyqt5 ; pywin32 ; psutil ; qrcode
-- 黑屏强锁（非图示普通锁定）处于测试阶段
-- 清理日志处于测试阶段
-- 有许多地方仍未支持配置文件自定义，意味着你需要手动去源代码更改
-- 使用start.bat授权uac提权启动；直接双击锁屏文件不提权启动
+- 使用start.bat授权uac提权启动
 - 使用start.bat启动，必须将锁屏pyw文件封装exe(pyinstaller --onefile --uac-uiaccess)并放置于start同目录,该exe文件名需为“lockscreenforclass"
 
 ## ❗️ 免责声明
