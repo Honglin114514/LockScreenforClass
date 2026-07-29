@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置中心</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <style>
+        /* ---------- 全局 ---------- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'HarmonyOS Sans SC', 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.3s ease;
+        }
+        #app {
+            display: flex;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        /* ---------- 侧边栏 ---------- */
+        .sidebar {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(0,0,0,0.06);
+            padding: 20px 0;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar .logo {
+            padding: 0 20px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2a3a;
+            user-select: none;
+        }
+        .menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            color: #4a5a6e;
+            transition: background 0.25s ease, color 0.25s ease, border-left-color 0.25s ease;
+            font-size: 14px;
+            user-select: none;
+        }
+        .menu-item:hover {
+            background: rgba(0, 120, 215, 0.06);
+            color: #1f2a3a;
+        }
+        .menu-item.active {
+            border-left-color: #0078d7;
+            background: rgba(0, 120, 215, 0.08);
+            color: #0078d7;
+            font-weight: 500;
+        }
+        .sidebar .footer {
+            margin-top: auto;
+            padding: 10px 20px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .sidebar .footer button {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #4a5a6e;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            font-weight: 500;
+        }
+        .sidebar .footer button:hover {
+            background: rgba(0, 120, 215, 0.1);
+        }
+
+        /* ---------- 内容区 ---------- */
+        .content {
+            flex: 1;
+            padding: 0;                 /* 内边距移交给 section 自己控制 */
+            position: relative;
+            overflow: hidden;           /* 防止内容溢出，滚动由 section 内部处理 */
+        }
+
+        .section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px 40px;         /* 原 content 的内边距移到这里 */
+            overflow-y: auto;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events: none;       /* 隐藏时不可点击 */
+        }
+
+        .section.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;       /* 显示时允许交互 */
+        }
+        .section h2 {
+            color: #1f2a3a;
+            margin-bottom: 24px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .setting-group {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            min-height: 44px;
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-row .label {
+            width: 400px;
+            flex-shrink: 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        .setting-row .control {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .setting-row .control input[type="text"],
+        .setting-row .control input[type="password"],
+        .setting-row .control input[type="number"],
+        .setting-row .control input[type="date"] {
+            max-width: 280px;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.4);
+            transition: border 0.2s;
+        }
+        .setting-row .control input:focus {
+            outline: none;
+            border-color: #0078d7;
+            box-shadow: 0 0 0 3px rgba(0,120,215,0.15);
+        }
+        .setting-row .control input[type="color"] {
+            width: 40px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 透明度滑块 */
+        .setting-row .control input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        .switch.on { background: #0078d7; }
+        .switch .thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .switch.on .thumb { transform: translateX(20px); }
+
+        /* ---------- 时段表格 ---------- */
+        .period-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .period-table th, .period-table td {
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 6px 12px;
+            text-align: left;
+        }
+        .period-table th {
+            background: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
+        }
+        .period-table .btn-sm {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            background: #e74d3ca4;
+            color: white;
+        }
+        .period-table .btn-sm:hover { background: #c03a2bd0; }
+        .add-period-btn {
+            margin-top: 2px;
+            padding: 4px 12px;
+            background: #0076d7a2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .add-period-btn:hover { background: #005a9ed8; }
+        .run-editor-btn {
+            margin-top: 5px;
+            padding: 6px 16px;
+            background: transparent;
+            color: #1f2a3a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .run-editor-btn:hover { background: rgba(255, 255, 255, 0.507); }
+
+        /* ---------- Toast ---------- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            background: rgba(255,255, 255, 0.5);
+            color: #1f2a3a;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show { opacity: 1; }
+
+        .btn-browse {
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-browse:hover { background: rgba(255, 255, 255, 0.5); }
+
+        /* ---------- 关于页面 ---------- */
+        .about-content {
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: center;
+            color: #1f2a3a;
+            position: relative;
+        }
+        .about-content h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .about-content .version {
+            color: #1f2a3a;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .about-content .desc {
+            line-height: 1.8;
+            font-size: 15px;
+            color: #3a4a5a;
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        /* ---------- 密码验证模态框 ---------- */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-overlay.show {
+            display: flex;
+        }
+        .auth-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 50px;
+            max-width: 360px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .auth-modal h2 {
+            margin-bottom: 10px;
+            color: #1f2a3a;
+        }
+        .auth-modal p {
+            color: #6c7a8a;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .auth-modal input[type="password"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d0d7e3;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .auth-modal input[type="password"]:focus {
+            border-color: #0078d7;
+            box-shadow: 0 0 0 3px rgba(0,120,215,0.15);
+        }
+        .auth-modal .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .auth-modal .btn-group button {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .auth-modal .btn-group .btn-confirm {
+            background: #0078d7;
+            color: white;
+        }
+        .auth-modal .btn-group .btn-confirm:hover {
+            background: #005a9e;
+        }
+        .auth-modal .btn-group .btn-cancel {
+            background: #f0f2f5;
+            color: #333;
+        }
+        .auth-modal .btn-group .btn-cancel:hover {
+            background: #e0e2e5;
+        }
+        .auth-modal .error-msg {
+            color: #e74c3c;
+            font-size: 13px;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* ---------- 关于 / EULA 切换动画 ---------- */
+        .about-page {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .about-page.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .eula-page {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+        .eula-page.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        
+    </style>
+</head>
+<body>
+    <!-- 密码验证遮罩 -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-modal">
+            <h2>验证你的身份</h2>
+            <p>请输入密码以继续</p>
+            <input type="password" id="authPassword" placeholder="请输入密码" autofocus>
+            <div class="error-msg" id="authError"></div>
+            <div class="btn-group">
+                <button class="btn-confirm" id="authConfirm">确 认</button>
+                <button class="btn-cancel" id="authCancel">取 消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="app" style="display:none;">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">设置</div>
+            <div class="menu-item" data-section="basic">基本</div>
+            <div class="menu-item" data-section="period">时段</div>
+            <div class="menu-item" data-section="appearance">个性化</div>
+            <div class="menu-item" data-section="function">功能</div>
+            <div class="menu-item" data-section="security">安全</div>
+            <div class="footer">
+                <div style="font-size:13px; color:#1f2a3a; padding:4px 0; text-align:center; user-select:none;">
+                    有些设置需要重启锁屏才能更改。如果可以，我们建议你设置完后均重启一次
+                </div>
+                <button id="restartBtn" style="font-family: 'HarmonyOS Sans SC', 'Segoe UI', sans-serif;">
+                    重启锁屏
+                </button>
+                <button id="aboutBtn" style="font-family: 'HarmonyOS Sans SC', 'Segoe UI', sans-serif;transition: background 0.2s ease, color 0.2s ease;">关于</button>
+            </div>
+        </div>
+
+        <!-- 内容区 -->
+        <div class="content">
+            <!-- 基本 -->
+            <div class="section" id="sec-basic">
+                <h2>基本设置</h2>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <span class="label">开机自启</span>
+                        <div class="control">
+                            <div class="switch" data-key="auto_start" data-type="number">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">倒计时</span>
+                        <div class="control">
+                            <div class="switch" data-key="countdown_enabled" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">目标名称</span>
+                        <div class="control">
+                            <input type="text" data-key="countdown_text">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">目标日期</span>
+                        <div class="control">
+                            <input type="date" data-key="exam_date">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时段 -->
+            <div class="section" id="sec-period">
+                <h2>时段管理</h2>
+                <div class="setting-group">
+                    <h3 style="font-size:16px; margin-bottom:8px;">锁定时段</h3>
+                    <table class="period-table" id="periods-table">
+                        <thead><tr><th>开始</th><th>结束</th><th>操作</th></tr></thead>
+                        <tbody id="periods-body"></tbody>
+                    </table>
+                    <button class="add-period-btn" data-target="periods">+ 添加时段</button>
+                </div>
+                <div class="setting-group">
+                    <h3 style="font-size:16px; margin-bottom:8px;">黑屏时段（需在锁定时间段包含）</h3>
+                    <table class="period-table" id="strong-periods-table">
+                        <thead><tr><th>开始</th><th>结束</th><th>操作</th></tr></thead>
+                        <tbody id="strong_periods-body"></tbody>
+                    </table>
+                    <button class="add-period-btn" data-target="strong_periods">+ 添加时段</button>
+                </div>
+                <div class="setting-group" style="border: none; box-shadow: none; padding: 0 27px;">
+                    <div class="setting-row">
+                        <span class="label">从ClassIsland导入（需保证classisland正在运行）</span>
+                        <div class="control">
+                            <select id="profileSelect" style="background-color: rgba(255, 255, 255, 0.4);padding:6px 12px;border:1px solid rgba(255, 255, 255, 0.4);border-radius:6px;min-width:200px;">
+                                <option value="">选择配置文件</option>
+                            </select>
+                            <button class="run-editor-btn" id="importProfileBtn">导入</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 个性化 -->
+            <div class="section" id="sec-appearance">
+                <h2>个性化</h2>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <span class="label">主题</span>
+                        <div class="control">
+                            <select id="themeSelect" style="background-color: rgba(255, 255, 255, 0.4);padding:6px 12px;border:1px solid rgba(255, 255, 255, 0.4);border-radius:6px;min-width:150px;">
+                                <option value="">选择主题(会自动回滚）</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">背景图片</span>
+                        <div class="control">
+                            <input type="text" data-key="background" placeholder="留空使用默认">
+                            <button class="btn-browse" data-key="background">浏览</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">设置背景图片</span>
+                        <div class="control">
+                            <input type="text" data-key="settings_background" placeholder="留空使用默认">
+                            <button class="btn-browse" data-key="settings_background">浏览</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">密码盘背景图片</span>
+                        <div class="control">
+                            <input type="text" data-key="password_bg" placeholder="留空使用默认">
+                            <button class="btn-browse" data-key="password_bg">浏览</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">密码盘透明度</span>
+                        <div class="control">
+                            <input type="range" data-key="password_opacity" min="0" max="100" value="80">
+                            <span id="opacityLabel">80%</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">时间日期颜色</span>
+                        <div class="control">
+                            <input type="color" data-key="clock_color">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">关机按钮颜色</span>
+                        <div class="control">
+                            <input type="color" data-key="shutdown_color">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">解锁按钮颜色</span>
+                        <div class="control">
+                            <input type="color" data-key="unlock_color">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">白板按钮颜色</span>
+                        <div class="control">
+                            <input type="color" data-key="whiteboard_color">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">关机按钮文字</span>
+                        <div class="control">
+                            <input type="text" data-key="shutdown_text">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">解锁按钮文字</span>
+                        <div class="control">
+                            <input type="text" data-key="unlock_text">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">白板按钮文字</span>
+                        <div class="control">
+                            <input type="text" data-key="whiteboard_text">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能 -->
+            <div class="section" id="sec-function">
+                <h2>功能开关</h2>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <span class="label">关机</span>
+                        <div class="control">
+                            <div class="switch" data-key="shutdown_enabled" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">白板</span>
+                        <div class="control">
+                            <div class="switch" data-key="whiteboard_enabled" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">最大点击次数</span>
+                        <div class="control">
+                            <input type="number" data-key="whiteboard_max" min="1" max="10">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">白板路径</span>
+                        <div class="control">
+                            <input type="text" data-key="seewo_path" style="max-width:400px;">
+                            <button class="btn-browse" data-key="seewo_path">浏览</button>
+                        </div>
+                    </div>
+                    <!-- 启用豁免 -->
+                    <div class="setting-row">
+                        <span class="label">启用豁免</span>
+                        <div class="control">
+                            <div class="switch" data-key="exemption_enabled" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 豁免应用列表 -->
+                    <div class="setting-row">
+                        <span class="label">豁免应用列表 (逗号分隔)</span>
+                        <div class="control">
+                            <input type="text" data-key="exemption_apps" placeholder="EasiNote.exe,EasiCamera.exe">
+                        </div>
+                    </div>
+                    
+                    <!-- 豁免等待时间 -->
+                    <div class="setting-row">
+                        <span class="label">豁免等待时间 (秒)</span>
+                        <div class="control">
+                            <input type="number" data-key="exemption_wait_time" min="0">
+                        </div>
+                    </div>
+
+                    <!-- 豁免检查间隔 -->
+                    <div class="setting-row">
+                        <span class="label">豁免检查间隔 (秒)</span>
+                        <div class="control">
+                            <input type="number" data-key="exemption_check_interval" min="1">
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+
+            <!-- 安全 -->
+            <div class="section" id="sec-security">
+                <h2>安全</h2>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <span class="label">解锁密码</span>
+                        <div class="control">
+                            <input type="password" data-key="password">
+                        </div>
+                    </div>
+                    <!-- 密码加密存储开关 -->
+                    <div class="setting-row">
+                        <span class="label">密码哈希加密（SHA-256）</span>
+                        <div class="control">
+                            <div class="switch" data-key="password_encrypted" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="setting-row">
+                        <span class="label">USB密钥文件</span>
+                        <div class="control">
+                            <input type="text" data-key="usb_key_file">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">访问设置验证</span>
+                        <div class="control">
+                            <div class="switch" data-key="settings_require_auth" data-type="number">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="label">退出验证</span>
+                        <div class="control">
+                            <div class="switch" data-key="quit_requires_password" data-type="boolean">
+                                <div class="thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关于页面 -->
+            <div class="section" id="sec-about">
+                <div class="about-content">
+                    <!-- 关于主页面（默认显示） -->
+                    <div class="about-page" id="aboutMain">
+                        <h1>Lock Screen for Class</h1>
+                        <div class="version">版本 v0.6.1</div>
+                        <div class="desc" style="margin-bottom:20px;">
+                            <p>为班级管理而生的锁屏</p>
+                            <p style="margin-top:10px;">开发：起懒了的cat（Honglin114514）</p>
+                            <p style="margin-top:10px; font-size:13px; color:#8a9aaa;">
+                                开发组感谢：璃言；ama简杰<br><br>
+                                邮箱：honglin114514@outlook.com<br>
+                                致谢：cli0xfa/getti<br><br>
+                                基于GUN GPL3.0开源许可<br>
+                                ©2026 起懒了的cat（Honglin114514)<br>
+                                使用本软件即代表您已阅读并同意EULA
+                            </p>
+                        </div>
+                        <button id="showEulaBtn" style="
+                            padding:8px 28px;
+                            border:none;
+                            border-radius:8px;
+                            background: rgba(255,255,255,0.5);
+                            color: #1f2a3a;
+                            font-size:15px;
+                            cursor:pointer;
+                            font-family: HarmonyOS Sans SC;
+                            transition:background 0.2s;
+                        ">EULA</button>
+                    </div>
+
+                    <!-- EULA 全文页面（初始隐藏） -->
+                    <div class="eula-page" id="eulaPage">
+                        <div style="text-align:left; background:rgba(255,255,255,0.5); padding:20px; border-radius:12px; max-height:70vh; overflow-y:auto;">
+                            <h3 style="text-align:left;">Lock Screen for Class 最终用户许可协议（EULA）</h3>
+                            <pre style="white-space:pre-wrap; font-family:inherit; font-size:14px; line-height:1.6;">
+适用：Lock Screen for Class及其衍生文件、图画等（以下简称“本软件”）
+开发者：起懒了的cat（Honglin114514）
+联系邮箱：honglin114514@outlook.com
+项目仓库：https://github.com/Honglin114514/LockScreenforClass/
+生效日期：2026年06月25日
+
+第一条 开源许可声明
+
+本软件基于 GNU General Public License v3.0（GPL-3.0） 开源协议发布。
+您对源代码的使用、复制、修改、分发等行为，均须遵守 GPL-3.0 的全部条款。
+GPL-3.0 协议文件见与软件一同发行的LICENSE.txt，您也可以访问 https://
+www.gnu.org/licenses/gpl-3.0.html 查阅。
+
+第二条 使用责任
+
+2.1 使用场景限制
+本软件适用于教育机构课堂教学场景的设备管控。您在获取、使用本软件前，必须确
+保具体应用场景已获得所在机构（学校、培训机构等）的明确授权，且符合相
+关校规、家长知情同意等合规要求。
+
+2.2 用户自负责任
+您应对本软件的使用行为承担全部法律责任。如因未经授权使用、违反所在机
+构规定或未充分告知相关人员而引发任何争议、投诉或法律纠纷，开发者不承
+担任何责任。
+
+2.3 高风险功能提示
+本软件包含屏幕锁定功能。您启用上述功能前，应依法依规获得必要授权，并
+采取合理措施保障用户知情权。因未获授权使用上述功能产生的法律责任，由
+您独立承担。
+
+第三条 数据与隐私保护
+
+3.1 数据本地存储
+本软件不主动向开发者或任何第三方服务器上传任何个人数据。软件运行中产
+生的配置信息、日志记录等所有数据，默认存储在本地设备中。
+
+3.2 开发者无法访问
+开发者无法远程访问、查看、复制或泄露您使用本软件所产生的任何数据。数
+据的备份、安全及合规处理由使用者自行负责。
+
+第四条 禁止滥用与恶意规避
+
+4.1 尊重开源
+开发者尊重并认可用户依据 GPL-3.0 享有的学习、研究及安全测试权利。
+
+4.2 明确禁止的恶意行为
+您不得开发、分发、销售或使用任何专门用于以下目的的第三方工具或脚本：
+
+（1）商业破坏：用于终止、屏蔽、绕过本软件核心功能，或以“破解版”、“免
+控版”等名义提供付费服务；
+（2）非法协助：明知他人未获合法授权，仍提供工具协助其规避本软件管控。
+
+4.3 违规处理
+若发现上述恶意行为，开发者有权：
+
+· 立即终止对该用户（或组织）的授权与服务支持；
+· 在官方渠道（如项目仓库、官网）公示其违规行为；
+· 保留向主管部门举报、提起民事诉讼及追究其法律责任的一切权利。
+
+第五条 无售后支持与维护承诺
+
+5.1 按“现状”提供
+本软件为免费开源项目，按“现状”（AS-IS）提供，开发者不提供任何明
+示或暗示的担保，包括但不限于适销性、特定用途适用性、无错误或不间
+断运行等保证。
+
+5.2 无售后支持义务
+开发者不提供任何形式的安装指导、使用培训、故障排查、数据恢复或电
+话/远程技术支持服务。
+
+5.3 无持续维护承诺
+开发者不承诺对本软件进行定期的版本更新、Bug 修复或安全补丁发布。
+
+5.4 风险自担
+使用者自愿选择使用本软件，并自行承担因软件缺陷、兼容性问题或停止
+维护带来的任何损失或不便。
+
+第六条 免责声明
+
+开发者不对任何因使用或无法使用本软件导致的损失承担责任，包括但不
+限于数据丢失、设备损坏、教学中断、业务损失等。
+
+第七条 协议修改与终止
+
+7.1 协议更新
+开发者保留更新本协议的权利。更新后的协议将在项目仓库中公示，公示 
+7 日后自动生效。
+
+7.2 终止条件
+若您违反本协议或 GPL-3.0 的任何条款，依据 GPL-3.0 第 8 条规定，
+您获得的授权将自动终止。
+
+7.3 拒绝更新
+若您不同意修改后的协议，应立即停止使用本软件并卸载所有副本。
+
+第八条 法律适用与争议解决
+
+8.1 法律适用
+本协议的订立、效力、解释、履行及争议解决均适用中华人民共和国法律。
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- 状态 ----------
+            let config = {};
+            let bridge = null;
+            let toastTimer = null;
+            let authRequired = false; // 是否需验证
+
+            // ---------- DOM 引用 ----------
+            const appEl = document.getElementById('app');
+            const authOverlay = document.getElementById('authOverlay');
+            const authPassword = document.getElementById('authPassword');
+            const authError = document.getElementById('authError');
+            const authConfirm = document.getElementById('authConfirm');
+            const authCancel = document.getElementById('authCancel');
+            const sections = document.querySelectorAll('.section');
+            const menuItems = document.querySelectorAll('.menu-item');
+            const aboutBtn = document.getElementById('aboutBtn');
+            const toastEl = document.getElementById('toast');
+            const opacitySlider = document.querySelector('input[data-key="password_opacity"]');
+            const opacityLabel = document.getElementById('opacityLabel');
+
+            // ---------- 工具函数 ----------
+            function showToast(msg) {
+                toastEl.textContent = msg;
+                toastEl.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2000);
+            }
+
+            function setConfigValue(key, value) {
+                config[key] = value;
+                if (bridge && bridge.set) {
+                    bridge.set(key, JSON.stringify(value));
+                    showToast('已立即保存');
+                }
+            }
+
+            function rgbaToHex(rgba) {
+                if (typeof rgba !== 'string') return rgba;
+                const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                if (match) {
+                    const r = parseInt(match[1]);
+                    const g = parseInt(match[2]);
+                    const b = parseInt(match[3]);
+                    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+                return rgba;
+            }
+
+            // ---------- 渲染配置 ----------
+            function renderConfig() {
+                // 文本输入、数字、日期、密码
+                document.querySelectorAll('input[data-key]').forEach(el => {
+                    if (el.type === 'color') return;
+                    if (el.type === 'range') return; // 单独处理
+                    const key = el.dataset.key;
+                    if (config[key] !== undefined && config[key] !== null) {
+                        if (el.type === 'date' && config[key]) {
+                            const d = new Date(config[key]);
+                            if (!isNaN(d)) {
+                                el.value = d.toISOString().split('T')[0];
+                                return;
+                            }
+                        }
+                        el.value = config[key];
+                    } else {
+                        el.value = '';
+                    }
+                });
+
+                // 透明度滑块
+                if (opacitySlider) {
+                    const val = config.password_opacity !== undefined ? Math.round(config.password_opacity * 100) : 80;
+                    opacitySlider.value = val;
+                    opacityLabel.textContent = val + '%';
+                }
+
+                // 颜色选择器
+                document.querySelectorAll('input[type="color"][data-key]').forEach(el => {
+                    const key = el.dataset.key;
+                    if (config[key] !== undefined && config[key] !== null) {
+                        let val = config[key];
+                        if (typeof val === 'string' && val.startsWith('rgba')) {
+                            val = rgbaToHex(val);
+                        }
+                        el.value = val;
+                    }
+                });
+
+                // 开关
+                document.querySelectorAll('.switch[data-key]').forEach(sw => {
+                    const key = sw.dataset.key;
+                    const type = sw.dataset.type || 'boolean';
+                    let val = config[key];
+                    if (val === undefined || val === null) return;
+                    let isOn = false;
+                    if (type === 'boolean') {
+                        isOn = !!val;
+                    } else if (type === 'number') {
+                        isOn = (val === 1);
+                    }
+                    sw.classList.toggle('on', isOn);
+                });
+
+                // 时段表格
+                renderPeriodTable('periods', config.periods || []);
+                renderPeriodTable('strong_periods', config.strong_periods || []);
+
+                // 背景图片
+                applyBackground(config.settings_background || '');
+            }
+
+            // ---------- 时段表格 ----------
+            function renderPeriodTable(key, data) {
+                const tbody = document.getElementById(key + '-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                data.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><input type="time" value="${item.start}" data-period-index="${index}" data-period-key="${key}" data-field="start"></td>
+                        <td><input type="time" value="${item.end}" data-period-index="${index}" data-period-key="${key}" data-field="end"></td>
+                        <td><button class="btn-sm" data-period-key="${key}" data-period-index="${index}">删除</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                tbody.querySelectorAll('input[type="time"]').forEach(inp => {
+                    inp.addEventListener('change', function(e) {
+                        const idx = parseInt(this.dataset.periodIndex);
+                        const field = this.dataset.field;
+                        const pkey = this.dataset.periodKey;
+                        const arr = config[pkey];
+                        if (arr && arr[idx]) {
+                            arr[idx][field] = this.value;
+                            savePeriods(pkey);
+                        }
+                    });
+                });
+
+                tbody.querySelectorAll('.btn-sm').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        const idx = parseInt(this.dataset.periodIndex);
+                        const pkey = this.dataset.periodKey;
+                        const arr = config[pkey];
+                        if (arr) {
+                            arr.splice(idx, 1);
+                            savePeriods(pkey);
+                            renderPeriodTable(pkey, arr);
+                        }
+                    });
+                });
+            }
+
+            function savePeriods(key) {
+                if (bridge && bridge.set) {
+                    bridge.set(key, JSON.stringify(config[key]));
+                    showToast('已实时保存');
+                }
+            }
+
+            // ---------- 添加时段 ----------
+            document.querySelectorAll('.add-period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const target = this.dataset.target;
+                    if (!config[target]) config[target] = [];
+                    config[target].push({ start: '00:00', end: '00:10' });
+                    renderPeriodTable(target, config[target]);
+                    savePeriods(target);
+                });
+            });
+             
+            //------------从cl导入-----------
+            document.getElementById('importProfileBtn').addEventListener('click', function() {
+                const select = document.getElementById('profileSelect');
+                const path = select.value;
+                if (!path) {
+                    showToast('请选择一个配置文件');
+                    return;
+                }
+                if (!bridge || !bridge.import_classisland_periods_from_profile) {
+                    showToast('导入功能未就绪');
+                    return;
+                }
+                bridge.import_classisland_periods_from_profile(path).then(msg => {
+                    showToast(msg);
+                    // 重新加载配置以刷新时段表格
+                    loadConfigFromBridge();
+                }).catch(err => {
+                    showToast('导入失败: ' + err);
+                });
+            });
+
+            function loadClassIslandProfiles() {
+                if (!bridge || !bridge.get_classisland_profiles) return;
+                bridge.get_classisland_profiles().then(data => {
+                    let profiles = [];
+                    if (typeof data === 'string') {
+                        try { profiles = JSON.parse(data); } catch(e) {}
+                    } else if (Array.isArray(data)) {
+                        profiles = data;
+                    }
+                    const select = document.getElementById('profileSelect');
+                    select.innerHTML = '<option value="">选择配置文件</option>';
+                    profiles.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.path;
+                        opt.textContent = p.name;
+                        select.appendChild(opt);
+                    });
+                }).catch(err => console.error('加载配置文件失败:', err));
+            }
+
+            document.getElementById('themeSelect').addEventListener('change', function() {
+                const theme = this.value;
+                if (!theme) return;
+                if (!bridge || !bridge.apply_theme) {
+                    showToast('应用主题功能未就绪');
+                    return;
+                }
+                bridge.apply_theme(theme);
+                // 延迟重新加载配置（等待后端保存完成）
+                setTimeout(() => {
+                    loadConfigFromBridge();  // 需确保此函数会重新渲染界面
+                }, 300);
+            });
+
+            // ---------- 背景图片 ----------
+            function applyBackground(path) {
+                if (path && path.trim() !== '') {
+                    let url = path;
+                    if (!path.startsWith('http') && !path.startsWith('data:')) {
+                        url = 'file:///' + path.replace(/\\/g, '/');
+                    }
+                    document.body.style.backgroundImage = `url("${url}")`;
+                } else {
+                    document.body.style.backgroundImage = '';
+                    document.body.style.backgroundColor = '#f0f2f5';
+                }
+            }
+
+            // ---------- 切换分类 ----------
+            function switchSection(sectionKey) {
+                menuItems.forEach(item => {
+                    item.classList.toggle('active', item.dataset.section === sectionKey);
+                });
+                sections.forEach(sec => {
+                    sec.classList.toggle('active', sec.id === 'sec-' + sectionKey);
+                });
+            }
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    switchSection(this.dataset.section);
+                });
+            });
+
+            aboutBtn.addEventListener('click', function() {
+                switchSection('about');
+            });
+
+            //------------重启线管--------------
+            // 添加重启按钮监听
+            document.getElementById('restartBtn').addEventListener('click', function() {
+                if (!bridge || !bridge.restart_app) {
+                    showToast('重启功能未就绪');
+                    return;
+                }
+                bridge.restart_app();
+                showToast('正在重启主程序...');
+            });
+
+            // ---------- 控件事件绑定 ----------
+            document.querySelectorAll('input[data-key]').forEach(el => {
+                if (el.type === 'color') return;
+                if (el.type === 'range') return; // 单独处理
+                el.addEventListener('change', function() {
+                    const key = this.dataset.key;
+                    let value = this.value;
+                    if (this.type === 'number') {
+                        value = parseFloat(value);
+                        if (isNaN(value)) return;
+                    }
+                    setConfigValue(key, value);
+                });
+            });
+
+            // 透明度滑块
+            if (opacitySlider) {
+                opacitySlider.addEventListener('input', function() {
+                    const val = parseInt(this.value);
+                    opacityLabel.textContent = val + '%';
+                    const floatVal = val / 100;
+                    setConfigValue('password_opacity', floatVal);
+                });
+            }
+
+            // 颜色选择器
+            document.querySelectorAll('input[type="color"][data-key]').forEach(el => {
+                el.addEventListener('input', function() {
+                    const key = this.dataset.key;
+                    setConfigValue(key, this.value);
+                });
+            });
+
+            // 开关
+            document.querySelectorAll('.switch[data-key]').forEach(sw => {
+                sw.addEventListener('click', function() {
+                    const key = this.dataset.key;
+                    const type = this.dataset.type || 'boolean';
+                    let val = config[key];
+                    if (val === undefined || val === null) return;
+                    let newVal;
+                    if (type === 'boolean') {
+                        newVal = !val;
+                    } else if (type === 'number') {
+                        newVal = (val === 1) ? 0 : 1;
+                    }
+
+                    // 特殊处理：关闭密码加密时弹窗警告
+                    if (key === 'password_encrypted' && val === true && newVal === false) {
+                        if (!confirm('因为哈希值无法解密，关闭加密后请务必重新设置密码！')) {
+                            return; // 取消操作
+                        }
+                    }
+
+                    setConfigValue(key, newVal);
+                    this.classList.toggle('on', (type === 'boolean' ? newVal : newVal === 1));
+                });
+            });
+
+            // ---------- 浏览文件 ----------
+            document.querySelectorAll('.btn-browse').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const key = this.dataset.key;
+                    if (bridge && bridge.pickFile) {
+                        bridge.pickFile(key, function(path) {
+                            if (path) {
+                                const input = document.querySelector(`input[data-key="${key}"]`);
+                                if (input) input.value = path;
+                                setConfigValue(key, path);
+                                if (key === 'settings_background') {
+                                    applyBackground(path);
+                                }
+                            }
+                        });
+                    } else {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        if (key === 'settings_background') input.accept = 'image/*';
+                        input.onchange = function() {
+                            if (this.files && this.files[0]) {
+                                const file = this.files[0];
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const textInput = document.querySelector(`input[data-key="${key}"]`);
+                                    if (textInput) textInput.value = file.path || file.name;
+                                    if (key === 'settings_background') {
+                                        applyBackground(e.target.result);
+                                    }
+                                    showToast('请输入文件路径');
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        };
+                        input.click();
+                    }
+                });
+            });
+
+            // ---------- 密码验证 ----------
+            function showAuthModal() {
+                authOverlay.classList.add('show');
+                authPassword.value = '';
+                authError.textContent = '';
+                authPassword.focus();
+            }
+
+            function hideAuthModal() {
+                authOverlay.classList.remove('show');
+            }
+
+            function verifyPassword() {
+                const pwd = authPassword.value;
+                if (!bridge || !bridge.verify_password) {
+                    authError.textContent = '验证功能未就绪';
+                    return;
+                }
+                bridge.verify_password(pwd).then(result => {
+                    if (result) {
+                        hideAuthModal();
+                        appEl.style.display = 'flex';
+                        renderConfig();
+                    } else {
+                        authError.textContent = '密码错误';
+                        authPassword.value = '';
+                        authPassword.focus();
+                    }
+                }).catch(err => {
+                    authError.textContent = '验证失败';
+                });
+            }
+
+            authConfirm.addEventListener('click', verifyPassword);
+            authPassword.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') verifyPassword();
+                if (e.key === 'Escape') {
+                    hideAuthModal();
+                    // 退出程序？简单处理：关闭窗口
+                    window.close();
+                }
+            });
+            authCancel.addEventListener('click', function() {
+                hideAuthModal();
+                window.close(); // 取消则关闭设置窗口
+            });
+
+            // ---------- 加载配置 ----------
+            function loadConfigFromBridge() {
+                if (!bridge || !bridge.getAll) {
+                    config = {};
+                    // 无 bridge，直接显示（降级）
+                    appEl.style.display = 'flex';
+                    renderConfig();
+                    switchSection('basic');
+                    console.warn('bridge 未连接');
+                    return;
+                }
+                bridge.getAll().then(data => {
+                    let parsed = {};
+                    if (typeof data === 'string') {
+                        try {
+                            parsed = JSON.parse(data);
+                        } catch (e) {
+                            console.error('解析配置失败:', e);
+                            parsed = {};
+                        }
+                    } else if (typeof data === 'object') {
+                        parsed = data;
+                    }
+                    config = parsed;
+
+                    // 检查是否需要验证
+                    const requireAuth = config.settings_require_auth === 1;
+                    if (requireAuth) {
+                        showAuthModal();
+                    } else {
+                        appEl.style.display = 'flex';
+                        renderConfig();
+                        switchSection('basic');
+                    }
+                    console.log('配置加载成功');
+                }).catch(err => {
+                    console.error('加载配置失败:', err);
+                    showToast('加载配置失败');
+                    // 降级：直接显示（无密码验证）
+                    appEl.style.display = 'flex';
+                    renderConfig();
+                    switchSection('basic');
+                });
+                loadThemes();
+                loadClassIslandProfiles()
+            }
+
+            function loadThemes() {
+                if (!bridge || !bridge.get_themes) return;
+                bridge.get_themes().then(data => {
+                    let themes = [];
+                    if (typeof data === 'string') {
+                        try { themes = JSON.parse(data); } catch(e) {}
+                    } else if (Array.isArray(data)) {
+                        themes = data;
+                    }
+                    const select = document.getElementById('themeSelect');
+                    select.innerHTML = '<option value="">选择主题(会自动回滚）</option>';
+                    themes.forEach(name => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        select.appendChild(opt);
+                    });
+                }).catch(err => console.error('加载主题失败:', err));
+            }
+
+            document.getElementById('themeSelect').addEventListener('change', function() {
+                const theme = this.value;
+                if (!theme) return;
+                if (!bridge || !bridge.apply_theme) {
+                    showToast('应用主题功能未就绪');
+                    return;
+                }
+                bridge.apply_theme(theme);
+                // 延迟重新加载配置（等待后端保存完成）
+                setTimeout(() => {
+                    loadConfigFromBridge();
+                }, 300);
+            });
+
+            // ---------- 初始化 QWebChannel ----------
+            function initBridge() {
+                if (typeof QWebChannel !== 'undefined') {
+                    new QWebChannel(qt.webChannelTransport, function(channel) {
+                        bridge = channel.objects.bridge;
+                        if (bridge) {
+                            console.log('Bridge 已连接');
+                            loadConfigFromBridge();
+                        } else {
+                            console.warn('Bridge 对象不存在');
+                            loadConfigFromBridge();
+                        }
+                    });
+                } else {
+                    console.warn('QWebChannel 未定义');
+                    loadConfigFromBridge();
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initBridge);
+            } else {
+                initBridge();
+            }
+            // ---------- 关于 / EULA 切换 ----------
+            const aboutMain = document.getElementById('aboutMain');
+            const eulaPage = document.getElementById('eulaPage');
+            const showEulaBtn = document.getElementById('showEulaBtn');
+            
+
+            function showEula() {
+                aboutMain.classList.add('hidden');
+                eulaPage.classList.add('active');
+            }
+
+            function hideEula() {
+                aboutMain.classList.remove('hidden');
+                eulaPage.classList.remove('active');
+            }
+
+            if (showEulaBtn) {
+                showEulaBtn.addEventListener('click', showEula);
+            }
+
+            
+
+            if (eulaPage) {
+                eulaPage.addEventListener('click', function(e) {
+                    // 如果点击的是 EULA 容器本身（即背景），或者是内部没有阻止冒泡的元素，都关闭
+                    // 但要避免点击内部文本区域误触发？实际点击文本也会冒泡到容器，我们允许。
+                    // 为避免误触，可判断点击目标是否为容器本身，但为简单，点击任何地方都关闭（用户说了“点击该页面任何位置”）
+                    hideEula();
+                });
+            }
+
+            // 防止点击 EULA 内部内容时冒泡到容器导致关闭（因为用户可能想滚动阅读），
+            // 但既然用户要求点击任何位置都退出，我们就保留这个行为。
+            // 如果希望点击内容不退出而点击空白才退出，可改为判断 e.target === eulaPage，但用户要求“任何位置”，所以保留。
+        })();
+    </script>
+</body>
+</html>
