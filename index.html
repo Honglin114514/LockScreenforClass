@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lock Screen for Class</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)), url(11\ \(1\).jpg) no-repeat center fixed;
+            background-size: cover;
+            margin: 0;
+            min-height: 100vh;
+            font-family: HarmonyOS Sans SC, sans-serif;
+        }
+
+        .parent {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .about-content {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .setting-group {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 20px 24px 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            backdrop-filter: blur(2px);
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .setting-group h1 {
+            margin: 0 0 4px;
+            font-weight: 600;
+            color: #1f2a3a;
+        }
+
+        .setting-group h3 {
+            margin: 0 0 18px;
+            font-weight: 400;
+            opacity: 0.8;
+            color: #1f2a3a;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .button {
+            padding: 8px 28px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.712);
+            color: #ffffff;
+            font-size: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s, transform 0.15s;
+            text-decoration: none;
+            display: inline-block;
+            user-select: none;
+        }
+
+        .button:hover {
+            transform: scale(1.03);
+        }
+        .button:active {
+            transform: scale(0.96);
+        }
+
+        /* ---- 下载展开面板 ---- */
+        .download-panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+                        opacity 0.4s ease,
+                        margin 0.3s ease;
+            margin-top: 0;
+            text-align: left;
+            color: #1f2a3a;
+        }
+
+        .download-panel.open {
+            max-height: 1500px;
+            opacity: 1;
+            margin-top: 20px;
+        }
+
+        .download-panel hr {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            margin: 0 0 16px;
+        }
+
+        .download-panel .panel-content {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            backdrop-filter: blur(2px);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .switch-btn {
+            background: transparent;
+            border: none;
+            color: #2563eb;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0;
+            text-decoration: underline;
+            font-family: inherit;
+        }
+        .switch-btn:hover {
+            color: #1d4ed8;
+        }
+        .dark-mode .switch-btn {
+            color: #93bbfc;
+        }
+        .dark-mode .switch-btn:hover {
+            color: #b9d0ff;
+        }
+
+        .info-item {
+            margin: 6px 0;
+        }
+        .info-item strong {
+            font-weight: 600;
+        }
+
+        .download-link-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 24px;
+            background: #1f2a3a;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .download-link-btn:hover {
+            background: #2c3a50;
+        }
+        .dark-mode .download-link-btn {
+            background: #ffffff;
+            color: #1f2a3a;
+        }
+        .dark-mode .download-link-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .loading-text {
+            opacity: 0.6;
+            font-style: italic;
+        }
+        .error-text {
+            color: #b91c1c;
+        }
+        .dark-mode .error-text {
+            color: #f87171;
+        }
+        .hint-text {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            color: inherit;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .refresh-btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .dark-mode .refresh-btn {
+            border-color: rgba(255,255,255,0.2);
+        }
+        .dark-mode .refresh-btn:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* 更新内容区域 */
+        .changelog-section {
+            margin: 12px 0 8px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 6px;
+            font-size: 13px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .dark-mode .changelog-section {
+            background: rgba(255,255,255,0.06);
+        }
+        .changelog-section .changelog-label {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        /* ---- 深色模式 ---- */
+        .dark-mode body {
+            background: linear-gradient(rgba(0, 0, 0, 0.512), rgba(0, 0, 0, 0.512)), url(d7.png) no-repeat center fixed;
+            background-size: cover;
+        }
+
+        .dark-mode .setting-group {
+            background: rgba(0, 0, 0, 0.212);
+        }
+
+        .dark-mode .setting-group h1,
+        .dark-mode .setting-group h3 {
+            color: #ffffff;
+        }
+
+        .dark-mode .button {
+            background: #ffffff;
+            color: rgba(0, 0, 0, 0.712);
+        }
+
+        .dark-mode .download-panel {
+            color: #eee;
+        }
+
+        .dark-mode .download-panel hr {
+            border-top-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .dark-mode .download-panel .panel-content {
+            background: rgba(0, 0, 0, 0.3);
+            color: #eee;
+        }
+
+        /* ---- 响应式 ---- */
+        @media (max-width: 480px) {
+            .setting-group {
+                padding: 16px 14px 20px;
+            }
+            .button {
+                padding: 6px 18px;
+                font-size: 13px;
+            }
+            .download-panel .panel-content {
+                padding: 12px 14px;
+                font-size: 13px;
+            }
+            .changelog-section {
+                max-height: 120px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="parent">
+        <div class="about-content">
+            <div class="setting-group">
+                <h1>Lock Screen for Class</h1><br>
+                <h3>为班级管理而生的锁屏</h3><br>
+
+                <div class="button-group">
+                    <button id="downloadBtn" class="button">下载</button>
+                    <button id="themeToggle" class="button">深色</button>
+                    <a href="https://github.com/Honglin114514/LockScreenforClass/" class="button" target="_blank">仓库</a>
+                </div>
+
+                <!-- 下载展开面板 -->
+                <div class="download-panel" id="downloadPanel">
+                    <hr>
+                    <div class="panel-content" id="panelContent">
+                        <!-- 切换按钮 -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                            <span id="modeLabel" style="font-weight: 500;">GitHub 下载</span>
+                            <button id="switchModeBtn" class="switch-btn" style="text-decoration-line: none;">切换到国内下载</button>
+                        </div>
+
+                        <!-- 信息展示区 -->
+                        <div id="infoDisplay"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 主题切换 ----------
+            const themeToggle = document.getElementById('themeToggle');
+            const html = document.documentElement;
+
+            if (localStorage.theme === 'dark') {
+                html.classList.add('dark-mode');
+                themeToggle.textContent = '浅色';
+            } else {
+                themeToggle.textContent = '深色';
+            }
+
+            themeToggle.addEventListener('click', function() {
+                html.classList.toggle('dark-mode');
+                if (html.classList.contains('dark-mode')) {
+                    localStorage.theme = 'dark';
+                    themeToggle.textContent = '浅色';
+                } else {
+                    localStorage.theme = 'light';
+                    themeToggle.textContent = '深色';
+                }
+            });
+
+            // ---------- DOM 引用 ----------
+            const downloadBtn = document.getElementById('downloadBtn');
+            const downloadPanel = document.getElementById('downloadPanel');
+            const infoDisplay = document.getElementById('infoDisplay');
+            const modeLabel = document.getElementById('modeLabel');
+            const switchBtn = document.getElementById('switchModeBtn');
+
+            // ---------- 状态 ----------
+            let currentMode = 'github'; // 'github' or 'domestic'
+            let githubData = null;
+            let domesticData = null;
+            let dataLoaded = false;
+            let isRefreshing = false;
+
+            // ---------- 数据获取函数 ----------
+            async function fetchGitHubRelease() {
+                const repo = 'Honglin114514/LockScreenforClass';
+                const url = `https://api.github.com/repos/${repo}/releases/latest`;
+                try {
+                    const response = await fetch(url, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    return {
+                        version: data.tag_name || 'v0.0.0',
+                        date: data.published_at ? new Date(data.published_at).toLocaleDateString('zh-CN') : '未知',
+                        downloadUrl: data.html_url || '#',
+                        assets: data.assets || [],
+                        changelog: data.body || ''  // 更新内容
+                    };
+                } catch (error) {
+                    console.warn('GitHub API 请求失败:', error);
+                    return null;
+                }
+            }
+
+            async function fetchDomesticInfo() {
+                try {
+                    const response = await fetch('version.json');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    return {
+                        version: data.version || 'v0.0.0',
+                        date: data.date || '未知',
+                        downloadUrl: data.download_url || '#',
+                        changelog: data.changelog || ''   // 国内更新内容
+                    };
+                } catch (error) {
+                    console.warn('信息请求失败:', error);
+                    return null;
+                }
+            }
+
+            // ---------- 加载所有数据 ----------
+            async function loadAllData() {
+                const results = await Promise.allSettled([
+                    fetchGitHubRelease(),
+                    fetchDomesticInfo()
+                ]);
+                githubData = results[0].status === 'fulfilled' ? results[0].value : null;
+                domesticData = results[1].status === 'fulfilled' ? results[1].value : null;
+                dataLoaded = true;
+                updateDisplay();
+            }
+
+            // ---------- 刷新数据 ----------
+            async function refreshData() {
+                if (isRefreshing) return;
+                isRefreshing = true;
+                infoDisplay.innerHTML = `<div class="loading-text">刷新中...</div>`;
+                try {
+                    const [githubResult, domesticResult] = await Promise.allSettled([
+                        fetchGitHubRelease(),
+                        fetchDomesticInfo()
+                    ]);
+                    githubData = githubResult.status === 'fulfilled' ? githubResult.value : null;
+                    domesticData = domesticResult.status === 'fulfilled' ? domesticResult.value : null;
+                    dataLoaded = true;
+                } catch (e) {
+                    console.error('刷新失败:', e);
+                } finally {
+                    isRefreshing = false;
+                    updateDisplay();
+                }
+            }
+
+            // ---------- 更新显示（包含更新内容） ----------
+            function updateDisplay() {
+                if (!dataLoaded) {
+                    infoDisplay.innerHTML = `<div class="loading-text">加载中...</div>`;
+                    return;
+                }
+
+                const isGithub = currentMode === 'github';
+                const data = isGithub ? githubData : domesticData;
+                const modeName = isGithub ? 'GitHub' : '国内';
+
+                let contentHtml = '';
+
+                if (data === null) {
+                    let extraHint = '';
+                    if (!isGithub) {
+                        extraHint = '文件读取失败或不存在';
+                    } else {
+                        extraHint = '请检查网络或稍后重试';
+                    }
+                    contentHtml = `
+                        <div class="error-text">❌ 获取 ${modeName} 信息失败</div>
+                        <div class="hint-text">${extraHint}</div>
+                    `;
+                } else {
+                    const version = data.version || '未知';
+                    const date = data.date || '未知';
+                    let linkUrl = data.downloadUrl || '#';
+                    const changelog = data.changelog || '';
+
+                    // 针对 GitHub，如果有 assets，尝试取第一个 zip 或任意资产的 browser_download_url
+                    if (isGithub && githubData && githubData.assets && githubData.assets.length > 0) {
+                        const asset = githubData.assets.find(a => a.name && a.name.endsWith('.zip')) || githubData.assets[0];
+                        if (asset && asset.browser_download_url) {
+                            linkUrl = asset.browser_download_url;
+                        }
+                    }
+
+                    contentHtml = `
+                        <div class="info-item"><strong>版本：</strong>${escapeHtml(version)}</div>
+                        <div class="info-item"><strong>发布日期：</strong>${escapeHtml(date)}</div>
+                    `;
+
+                    // 如果有更新内容，显示
+                    if (changelog && changelog.trim() !== '') {
+                        // 简单支持换行，保留格式
+                        const formattedChangelog = escapeHtml(changelog);
+                        contentHtml += `
+                            <div class="changelog-section">
+                                <div class="changelog-label">更新详情</div>
+                                <div style="white-space: pre-wrap;">${formattedChangelog}</div>
+                            </div>
+                        `;
+                    }
+
+                    contentHtml += `
+                        <div style="margin-top: 10px;">
+                            <a href="${escapeHtml(linkUrl)}" target="_blank" class="download-link-btn">⬇ 下载 ${modeName} 版本</a>
+                        </div>
+                        <div style="margin-top: 6px; font-size: 12px; opacity: 0.6;">
+                            ${isGithub ? '来自 GitHub Releases' : '来自网站服务器'}
+                        </div>
+                    `;
+                }
+
+                // 添加刷新按钮
+                contentHtml += `
+                    <div style="margin-top: 12px;">
+                        <button data-action="refresh" class="refresh-btn">刷新</button>
+                    </div>
+                `;
+
+                infoDisplay.innerHTML = contentHtml;
+            }
+
+            // 简单的防 XSS 转义
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ---------- 切换模式 ----------
+            function switchMode() {
+                if (!dataLoaded) {
+                    loadAllData().then(() => {
+                        doSwitch();
+                    });
+                    return;
+                }
+                doSwitch();
+            }
+
+            function doSwitch() {
+                if (currentMode === 'github') {
+                    currentMode = 'domestic';
+                    modeLabel.textContent = '国内下载';
+                    switchBtn.textContent = '切换到 GitHub 下载';
+                } else {
+                    currentMode = 'github';
+                    modeLabel.textContent = 'GitHub 下载';
+                    switchBtn.textContent = '切换到国内下载';
+                }
+                updateDisplay();
+            }
+
+            // ---------- 事件委托：监听刷新按钮 ----------
+            infoDisplay.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-action="refresh"]');
+                if (target) {
+                    e.preventDefault();
+                    refreshData();
+                }
+            });
+
+            // ---------- 展开/收起 ----------
+            downloadBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = downloadPanel.classList.contains('open');
+                if (!isOpen) {
+                    downloadPanel.classList.add('open');
+                    downloadBtn.textContent = '收起';
+                    if (!dataLoaded) {
+                        infoDisplay.innerHTML = `<div class="loading-text">加载中...</div>`;
+                        loadAllData();
+                    } else {
+                        updateDisplay();
+                    }
+                } else {
+                    downloadPanel.classList.remove('open');
+                    downloadBtn.textContent = '下载';
+                }
+            });
+
+            switchBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                switchMode();
+            });
+
+            // ---------- 预加载 ----------
+            document.addEventListener('DOMContentLoaded', function() {
+                loadAllData().catch(() => {});
+            });
+
+        })();
+    </script>
+</body>
+</html>
