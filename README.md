@@ -19,6 +19,13 @@ v0.6宣传片→https://www.bilibili.com/video/BV1jy7G6kEo3/?share_source=copy_w
 ## 🚀 使用
 1.  UIAccess提权：双击start.bat并授权uac
 
+## 提示
+- 目前不适用于有键盘的一体机（没有屏蔽快捷键等）目前只有uiaccess提权
+- 如果你授权uac后无法打开，请查看系统是否禁用了ti权限
+- 打开设置耗费时间较长，请耐心等待
+- 开机自启项在公共的启动文件夹
+- 初始密码为114514
+
 ## ❕重要提示
 - 需要第三方py库：pyqt5 ; pywin32 ; psutil ; qrcode
 - 使用start.bat授权uac提权启动
