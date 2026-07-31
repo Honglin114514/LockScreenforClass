@@ -462,6 +462,7 @@
                     contentHtml = `
                         <div class="info-item"><strong>版本：</strong>${escapeHtml(version)}</div>
                         <div class="info-item"><strong>发布日期：</strong>${escapeHtml(date)}</div>
+                        <div class="info-item"><strong>更新详情：</strong></div>
                     `;
 
                     // 如果有更新内容，显示
@@ -470,7 +471,6 @@
                         const formattedChangelog = escapeHtml(changelog);
                         contentHtml += `
                             <div class="changelog-section">
-                                <div class="changelog-label">更新详情</div>
                                 <div style="white-space: pre-wrap;">${formattedChangelog}</div>
                             </div>
                         `;
@@ -478,7 +478,7 @@
 
                     contentHtml += `
                         <div style="margin-top: 10px;">
-                            <a href="${escapeHtml(linkUrl)}" target="_blank" class="download-link-btn">⬇ 下载 ${modeName} 版本</a>
+                            <a href="${escapeHtml(linkUrl)}" target="_blank" class="download-link-btn">⬇ 下载 （${modeName}）</a>
                         </div>
                         <div style="margin-top: 6px; font-size: 12px; opacity: 0.6;">
                             ${isGithub ? '来自 GitHub Releases' : '来自网站服务器'}
