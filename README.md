@@ -1,6 +1,6 @@
 #Lock Screen for Class
 ![picture1](Lock Screen for Class（5）.png)
-<div algin="center">
+<div align="center">
 < a herf="https://www.bilibili.com/video/BV1jy7G6kEo3/?share_source=copy_web&vd_source=c9d828a5f589cafde88a1012eb18b02c">v0.6宣传片</a>
 
 [![测试版 Release](https://img.shields.io/github/v/release/Honglin114514/LockScreenforClass?style=flat-square&color=%233fb950&label=正式版)](https://github.com/Honglin114514/LockScreenforClass/releases/latest)
