@@ -23,6 +23,12 @@ Lock Screen for Class是一款面向班级的锁屏软件。当然，不只有�
 >
 > 目前每次运行均会索要UAC授权，您可前往 用户账户控制 将等级调至最低，但请注意日后对需要管理员权限的不良程序防护
 
+## 效果展示
+### 正常锁屏
+![pictre](https://github.com/Honglin114514/LockScreenforClass/blob/main/p3.png)
+### 黑屏锁屏（适合午休）
+![picture](https://github.com/Honglin114514/LockScreenforClass/blob/main/p2.png)
+
 ## 🚀 使用
 1. 下载并解压
 2. 双击运行start.bat
@@ -42,7 +48,7 @@ Lock Screen for Class是一款面向班级的锁屏软件。当然，不只有�
 
 > [!TIP]
 >
-> 如果您希望与我们一同开发，请入群。
+> 如果您希望与我们一同开发,或有建议提出，请入群。
 
 ## ❗️ 免责声明
 本项目仅用于学习交流使用目的, 请勿将本项目用于可能违反当地法律、侵犯著作权等。若将本项目用于非法用途, 一切后果由使用者承担。开发者不承担此类行为带来的任何后果或责任。
