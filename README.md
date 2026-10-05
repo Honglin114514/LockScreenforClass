@@ -1,5 +1,5 @@
 # Lock Screen for Class
-![picture](https://github.com/Honglin114514/LockScreenforClass/blob/main/Lock%20Screen%20for%20Class%20(5).png)
+![picture]([https://github.com/Honglin114514/LockScreenforClass/blob/main/Lock%20Screen%20for%20Class%20(5).png](https://github.com/Honglin114514/LockScreenforClass/blob/main/picture/Lock%20Screen%20for%20Class%20(5).png))
 <div align="center">
 <a href="https://www.bilibili.com/video/BV1jy7G6kEo3/?share_source=copy_web&vd_source=c9d828a5f589cafde88a1012eb18b02c">v0.6宣传片</a>
 
@@ -27,12 +27,12 @@ Lock Screen for Class是一款面向班级的锁屏软件。当然，不只有�
 
 ## 效果展示
 ### 正常锁屏
-![pictre](https://github.com/Honglin114514/LockScreenforClass/blob/main/p3.png)
+![pictre]([https://github.com/Honglin114514/LockScreenforClass/blob/main/p3.png](https://github.com/Honglin114514/LockScreenforClass/blob/main/picture/p3.png))
 ### 黑屏锁屏（适合午休）
-![picture](https://github.com/Honglin114514/LockScreenforClass/blob/main/p2.png)
+![picture]([https://github.com/Honglin114514/LockScreenforClass/blob/main/p2.png](https://github.com/Honglin114514/LockScreenforClass/blob/main/picture/p2.png))
 
 ## 🚀 使用
-1. 下载并解压（注意路径不能有中文/空格/特殊字符）
+1. 下载并解压（注意路径不能有中文）
 2. 双击运行start.bat
 > [!TIP]
 >
